@@ -11,4 +11,4 @@ class TarifaDiaEspecialService{
 
 
 
-export default TarifaDiaEspecialService;
+export default new TarifaDiaEspecialService();

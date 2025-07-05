@@ -41,7 +41,7 @@ class ComprobanteServiceTest {
     @Test
     void generarComprobante_WhenReservaNotFound_ThrowsException() {
         when(reservaRepository.findById(1L)).thenReturn(Optional.empty());
-        assertThrows(RuntimeException.class, () -> comprobanteService.generarComprobante(1L, "TARJETA"));
+        assertThrows(RuntimeException.class, () -> comprobanteService.generarComprobanteOnly(1L, "TARJETA"));
     }
 
     @Test
@@ -51,7 +51,7 @@ class ComprobanteServiceTest {
         when(reservaRepository.findById(1L)).thenReturn(Optional.of(reserva));
         when(comprobanteRepository.findByReservaId(1L)).thenReturn(Optional.of(existing));
 
-        ComprobanteEntity result = comprobanteService.generarComprobante(1L, "TARJETA");
+        ComprobanteEntity result = comprobanteService.generarComprobanteOnly(1L, "TARJETA");
         assertEquals(existing, result);
     }
 
@@ -67,7 +67,7 @@ class ComprobanteServiceTest {
         when(comprobanteRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
         when(javaMailSender.createMimeMessage()).thenReturn(mock(MimeMessage.class));
 
-        ComprobanteEntity result = comprobanteService.generarComprobante(1L, "TARJETA");
+        ComprobanteEntity result = comprobanteService.generarComprobanteOnly(1L, "TARJETA");
         assertNotNull(result.getCodigo());
         verify(javaMailSender).send(any(MimeMessage.class));
     }

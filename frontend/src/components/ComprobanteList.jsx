@@ -28,58 +28,42 @@ const ComprobanteList = () => {
             });
     };
 
+    // Descargar PDF usando el endpoint desacoplado
     const handleDownloadPdf = (idComprobante) => {
         setLoadingPdfId(idComprobante);
-        ComprobanteService.downloadComprobantePdfById(idComprobante)
+        ComprobanteService.generarPdfComprobante(idComprobante)
             .then(response => {
-                const contentType = response.headers['content-type'];
-                if (contentType && contentType.includes('application/pdf')) {
-                    const url = window.URL.createObjectURL(new Blob([response.data]));
-                    const link = document.createElement('a');
-                    link.href = url;
-                    const contentDisposition = response.headers['content-disposition'];
-                    let filename = `Comprobante-${idComprobante}.pdf`;
-                    if (contentDisposition) {
-                        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
-                        if (filenameMatch && filenameMatch.length > 1) {
-                            filename = filenameMatch[1].replace(/"/g, '');
-                        }
-                    }
-                    link.setAttribute('download', filename);
-                    document.body.appendChild(link);
-                    link.click();
-                    link.remove();
-                    setTimeout(() => window.URL.revokeObjectURL(url), 100);
-                } else {
-                    const reader = new FileReader();
-                    reader.onload = () => { setError(`Error al descargar PDF para ${idComprobante}: ` + reader.result); };
-                    reader.readAsText(new Blob([response.data]));
+                const url = window.URL.createObjectURL(new Blob([response.data]));
+                const link = document.createElement('a');
+                let filename = `Comprobante-${idComprobante}.pdf`;
+                const contentDisposition = response.headers['content-disposition'];
+                if (contentDisposition) {
+                    const match = contentDisposition.match(/filename="?([^";]+)"?/);
+                    if (match) filename = match[1];
                 }
+                link.href = url;
+                link.setAttribute('download', filename);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
             })
             .catch(err => {
-                console.error(`Error downloading PDF for ${idComprobante}:`, err);
-                let errorMessage = `Error al descargar el PDF para ${idComprobante}`;
-                if (err.response && err.response.data instanceof Blob) {
-                    const reader = new FileReader();
-                    reader.onload = () => { setError(errorMessage + ': ' + reader.result); };
-                    reader.readAsText(err.response.data);
-                } else {
-                    setError(errorMessage + ': ' + (err.response?.data || err.message));
-                }
+                setError(`Error al descargar PDF para ${idComprobante}: ` + (err.response?.data || err.message));
             })
             .finally(() => {
                 setLoadingPdfId(null);
             });
     };
 
-    const handleEnviarEmail = (codigoComprobante) => {
-        setLoadingEmailCodigo(codigoComprobante);
-        ComprobanteService.enviarEmailComprobante(codigoComprobante)
-            .then(response => {
-                alert(response.data || `Solicitud de envío de email para ${codigoComprobante} procesada.`);
+    // Enviar comprobante PDF por email usando el endpoint desacoplado
+    const handleEnviarEmail = (idComprobante) => {
+        setLoadingEmailCodigo(idComprobante);
+        ComprobanteService.enviarComprobantePdfPorEmail(idComprobante)
+            .then(() => {
+                alert(`Comprobante enviado por email correctamente para ${idComprobante}`);
             })
             .catch(err => {
-                setError(`Error al enviar email para ${codigoComprobante}: ` + (err.response?.data || err.message));
+                setError(`Error al enviar email para ${idComprobante}: ` + (err.response?.data || err.message));
             })
             .finally(() => {
                 setLoadingEmailCodigo(null);

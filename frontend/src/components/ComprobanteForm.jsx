@@ -60,78 +60,52 @@ const ComprobanteForm = () => {
             });
     };
     
+    // Descargar PDF usando el endpoint desacoplado
     const downloadPdf = () => {
         if (!comprobanteDetails || !comprobanteDetails.idReserva) {
             setError('No hay detalles del comprobante para descargar o falta el ID de la reserva.');
             return;
         }
-        
         setLoading(true);
         setError('');
-        
-        ComprobanteService.downloadComprobantePdfByReservaId(comprobanteDetails.idReserva)
+        ComprobanteService.generarPdfComprobante(comprobanteDetails.idReserva)
             .then(response => {
-                const contentType = response.headers['content-type'];
-                
-                if (contentType && contentType.includes('application/pdf')) {
-                    const url = window.URL.createObjectURL(new Blob([response.data]));
-                    const link = document.createElement('a');
-                    link.href = url;
-                    
-                    const contentDisposition = response.headers['content-disposition'];
-                    let filename = `Comprobante-Reserva-${comprobanteDetails.idReserva}.pdf`;
-                    
-                    if (contentDisposition) {
-                        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
-                        if (filenameMatch && filenameMatch.length > 1) {
-                            filename = filenameMatch[1].replace(/"/g, ''); // Remove quotes
-                        }
-                    }
-                    
-                    link.setAttribute('download', filename);
-                    document.body.appendChild(link);
-                    link.click();
-                    link.remove();
-                    setTimeout(() => window.URL.revokeObjectURL(url), 100);
-                } else {
-                    const reader = new FileReader();
-                    reader.onload = () => { setError('Error al descargar: ' + reader.result); };
-                    reader.readAsText(new Blob([response.data]));
+                const url = window.URL.createObjectURL(new Blob([response.data]));
+                const link = document.createElement('a');
+                let filename = `Comprobante-${comprobanteDetails.idReserva}.pdf`;
+                const contentDisposition = response.headers['content-disposition'];
+                if (contentDisposition) {
+                    const match = contentDisposition.match(/filename="?([^";]+)"?/);
+                    if (match) filename = match[1];
                 }
+                link.href = url;
+                link.setAttribute('download', filename);
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
             })
             .catch(err => {
-                console.error('Error downloading PDF:', err);
-                let errorMessage = 'Error al descargar el PDF';
-                if (err.response && err.response.data instanceof Blob) {
-                    const reader = new FileReader();
-                    reader.onload = () => { setError(errorMessage + ': ' + reader.result); };
-                    reader.readAsText(err.response.data);
-                } else {
-                    setError(errorMessage + ': ' + (err.response?.data || err.message));
-                }
+                setError('Error al descargar PDF: ' + (err.response?.data || err.message));
             })
-            .finally(() => {
-                setLoading(false);
-            });
+            .finally(() => setLoading(false));
     };
 
+    // Enviar comprobante PDF por email usando el endpoint desacoplado
     const handleEnviarEmail = () => {
-        if (!comprobanteDetails || !comprobanteDetails.codigoComprobante) {
-            setError('No hay código de comprobante para enviar por email.');
+        if (!comprobanteDetails || !comprobanteDetails.idReserva) {
+            setError('No hay comprobante para enviar por email.');
             return;
         }
         setLoading(true);
         setError('');
-        ComprobanteService.enviarEmailComprobante(comprobanteDetails.codigoComprobante)
-            .then(response => {
-                alert(response.data || "Solicitud de envío de email procesada.");
+        ComprobanteService.enviarComprobantePdfPorEmail(comprobanteDetails.idReserva)
+            .then(res => {
+                setSuccess(true);
             })
             .catch(err => {
                 setError('Error al enviar email: ' + (err.response?.data || err.message));
             })
-            .finally(() => {
-                setLoading(false);
-            });
+            .finally(() => setLoading(false));
     };
 
     const resetForm = () => {

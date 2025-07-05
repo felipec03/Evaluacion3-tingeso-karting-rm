@@ -1,3 +1,7 @@
+    public ComprobanteEntity getComprobanteByReservaId(Long reservaId) {
+        return comprobanteRepository.findByReservaId(reservaId)
+            .orElseThrow(() -> new RuntimeException("Comprobante no encontrado"));
+    }
 package com.example.karting_rm.services;
 
 import com.example.karting_rm.entities.ComprobanteEntity;
@@ -70,37 +74,29 @@ public class ComprobanteService {
     }
 
     @Transactional
-    public ComprobanteEntity generarComprobante(Long reservaId, String metodoPago) {
+    public ComprobanteEntity generarComprobanteOnly(Long reservaId, String metodoPago) {
         Optional<ReservaEntity> reservaOpt = reservaRepository.findById(reservaId);
         if (reservaOpt.isEmpty()) {
             throw new RuntimeException("Reserva no encontrada con ID: " + reservaId);
         }
-
         ReservaEntity reserva = reservaOpt.get();
-
         // Verificar si ya existe un comprobante para esta reserva
         Optional<ComprobanteEntity> comprobanteExistente = comprobanteRepository.findByReservaId(reservaId);
         if (comprobanteExistente.isPresent()) {
-            return comprobanteExistente.get(); // Retorna el comprobante existente
+            return comprobanteExistente.get();
         }
-
         // Generar código único para el comprobante
         String codigo = "KRM-" + UUID.randomUUID().toString().substring(0, 8).toUpperCase();
-
         // Obtener información de usuario
         UsuarioEntity usuario = usuarioRepository.findByEmail(reserva.getEmailarrendatario());
         if (usuario == null) {
-            // Crear un usuario temporal con la información mínima necesaria
             usuario = new UsuarioEntity();
             usuario.setEmail(reserva.getEmailarrendatario());
             usuario.setNombre("Cliente");
             usuario.setApellido("Temporal");
             usuario.setTelefono("No registrado");
-            // No guardamos el usuario temporal en la base de datos
         }
-
         // Crear el comprobante
-
         ComprobanteEntity comprobante = new ComprobanteEntity();
         comprobante.setReservaId(reservaId);
         comprobante.setEmail(reserva.getEmailarrendatario());
@@ -109,20 +105,15 @@ public class ComprobanteService {
         comprobante.setMetodoPago(metodoPago != null ? metodoPago : "TARJETA");
         comprobante.setEstadoPago("PAGADO");
         comprobante.setFechaEmision(new java.util.Date());
-
         // Calcular precios y descuentos
         float tarifaBase = reserva.getPrecioInicial();
         float descuentoGrupo = reserva.getDescuentoGrupo();
         float descuentoFrecuente = reserva.getDescuentoFrecuente();
         float descuentoCumple = reserva.getDescuentoCumple();
-
-        // Aplicar el mayor descuento (basado en la lógica de negocio)
         float descuentoAplicado = Math.max(Math.max(descuentoGrupo, descuentoFrecuente), descuentoCumple);
         float precioSinIva = tarifaBase - descuentoAplicado;
         float iva = reserva.getIva();
         float total = reserva.getTotalConIva();
-
-        // Establecer los valores en el comprobante
         comprobante.setTarifaBase(tarifaBase);
         comprobante.setDescuentoGrupo(descuentoGrupo);
         comprobante.setDescuentoFrecuente(descuentoFrecuente);
@@ -130,20 +121,53 @@ public class ComprobanteService {
         comprobante.setPrecioSinIva(precioSinIva);
         comprobante.setIva(iva);
         comprobante.setTotal(total);
-
         // Guardar el comprobante
-        ComprobanteEntity comprobanteGuardado = comprobanteRepository.save(comprobante);
+        return comprobanteRepository.save(comprobante);
+    }
 
-        // Generar y enviar PDF
-        try {
-            byte[] pdfBytes = generarPDFComprobante(comprobante, reserva, usuario);
-            enviarComprobantePorEmail(reserva.getEmailarrendatario(), pdfBytes, codigo);
-        } catch (Exception e) {
-            logger.error("Error al generar o enviar el comprobante: {}", e.getMessage());
-            // Continuar guardando el comprobante aunque falle el envío
+    /**
+     * Genera y retorna el PDF del comprobante (no email)
+     */
+    public byte[] generarPdfComprobantePorReservaId(Long reservaId) {
+        Optional<ReservaEntity> reservaOpt = reservaRepository.findById(reservaId);
+        if (reservaOpt.isEmpty()) {
+            throw new RuntimeException("Reserva no encontrada con ID: " + reservaId);
         }
+        ReservaEntity reserva = reservaOpt.get();
+        ComprobanteEntity comprobante = comprobanteRepository.findByReservaId(reservaId)
+                .orElseThrow(() -> new RuntimeException("Comprobante no encontrado para la reserva"));
+        UsuarioEntity usuario = usuarioRepository.findByEmail(reserva.getEmailarrendatario());
+        if (usuario == null) {
+            usuario = new UsuarioEntity();
+            usuario.setEmail(reserva.getEmailarrendatario());
+            usuario.setNombre("Cliente");
+            usuario.setApellido("Temporal");
+            usuario.setTelefono("No registrado");
+        }
+        return generarPDFComprobante(comprobante, reserva, usuario);
+    }
 
-        return comprobanteGuardado;
+    /**
+     * Envía el comprobante PDF por email (no retorna PDF)
+     */
+    public void enviarComprobantePdfPorEmail(Long reservaId) {
+        Optional<ReservaEntity> reservaOpt = reservaRepository.findById(reservaId);
+        if (reservaOpt.isEmpty()) {
+            throw new RuntimeException("Reserva no encontrada con ID: " + reservaId);
+        }
+        ReservaEntity reserva = reservaOpt.get();
+        ComprobanteEntity comprobante = comprobanteRepository.findByReservaId(reservaId)
+                .orElseThrow(() -> new RuntimeException("Comprobante no encontrado para la reserva"));
+        UsuarioEntity usuario = usuarioRepository.findByEmail(reserva.getEmailarrendatario());
+        if (usuario == null) {
+            usuario = new UsuarioEntity();
+            usuario.setEmail(reserva.getEmailarrendatario());
+            usuario.setNombre("Cliente");
+            usuario.setApellido("Temporal");
+            usuario.setTelefono("No registrado");
+        }
+        byte[] pdfBytes = generarPDFComprobante(comprobante, reserva, usuario);
+        enviarComprobantePorEmail(reserva.getEmailarrendatario(), pdfBytes, comprobante.getCodigo());
     }
 
     public byte[] generarPDFComprobante(ComprobanteEntity comprobante, ReservaEntity reserva, UsuarioEntity usuario) {
@@ -310,7 +334,7 @@ public class ComprobanteService {
 
         if (comprobanteOpt.isEmpty()) {
             // Generate a new comprobante (default to TARJETA if not specified)
-            comprobante = generarComprobante(reservaId, "TARJETA");
+            comprobante = generarComprobanteOnly(reservaId, "TARJETA");
         } else {
             comprobante = comprobanteOpt.get();
         }

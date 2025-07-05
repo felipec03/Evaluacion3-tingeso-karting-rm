@@ -34,14 +34,49 @@ public class ComprobanteController {
         }
     }
 
-    @RequestMapping(value = "/generar/{reservaId}", method = {RequestMethod.GET, RequestMethod.POST})
+    // 1. Solo genera y guarda el comprobante (no PDF, no email)
+    @PostMapping("/generar/{reservaId}")
     public ResponseEntity<?> generarComprobante(@PathVariable Long reservaId, @RequestParam(value = "metodoPago", required = false) String metodoPago) {
         try {
-            ComprobanteEntity comprobante = comprobanteService.generarComprobante(reservaId, metodoPago);
-            // Map to DTO for frontend compatibility
+            ComprobanteEntity comprobante = comprobanteService.generarComprobanteOnly(reservaId, metodoPago);
             return ResponseEntity.ok(mapComprobanteToDto(comprobante));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    // 2. Genera y retorna el PDF del comprobante (no email)
+    @GetMapping("/generar-pdf/{reservaId}")
+    public ResponseEntity<byte[]> generarPdfComprobante(@PathVariable Long reservaId) {
+        try {
+            byte[] pdfBytes = comprobanteService.generarPdfComprobantePorReservaId(reservaId);
+            ComprobanteEntity comprobante = comprobanteService.getComprobanteByReservaId(reservaId);
+            HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_PDF);
+            headers.setContentDispositionFormData("attachment", "Comprobante-" + comprobante.getCodigo() + ".pdf");
+            headers.setContentLength(pdfBytes.length);
+            return new ResponseEntity<>(pdfBytes, headers, HttpStatus.OK);
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .body(("Error: " + e.getMessage()).getBytes());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .contentType(MediaType.TEXT_PLAIN)
+                    .body(("Error interno: " + e.getMessage()).getBytes());
+        }
+    }
+
+    // 3. Envía el comprobante PDF por email (no retorna PDF)
+    @PostMapping("/enviar-pdf-email/{reservaId}")
+    public ResponseEntity<?> enviarComprobantePdfPorEmail(@PathVariable Long reservaId) {
+        try {
+            comprobanteService.enviarComprobantePdfPorEmail(reservaId);
+            return ResponseEntity.ok("Comprobante enviado por email correctamente");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(e.getMessage());
         }
     }
 
@@ -77,8 +112,7 @@ public class ComprobanteController {
             byte[] pdfBytes = comprobanteService.obtenerPdfPorReservaId(reservaId);
 
             // Get the comprobante for the filename
-            ComprobanteEntity comprobante = comprobanteService.comprobanteRepository.findByReservaId(reservaId)
-                    .orElseThrow(() -> new RuntimeException("Comprobante no encontrado"));
+            ComprobanteEntity comprobante = comprobanteService.getComprobanteByReservaId(reservaId);
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_PDF);

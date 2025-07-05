@@ -12,23 +12,24 @@ class ComprobanteService {
         return axios.get(`${API_BASE_URL}/${id}`);
     }
     
-    // Updated to match backend: POST /api/comprobantes/generar/{reservaId}
+    // POST /api/comprobantes/generar/{reservaId}
     generarComprobante(reservaId, metodoPago) {
         return axios.post(`${API_BASE_URL}/generar/${reservaId}`, null, {
-            params: {
-                metodoPago: metodoPago
-            }
+            params: { metodoPago }
         });
     }
-    
-    // Updated to match backend: GET /api/comprobantes/download/reserva/{reservaId}
-    downloadComprobantePdfByReservaId(reservaId) {
-        return axios.get(`${API_BASE_URL}/download/reserva/${reservaId}`, { 
+
+    // GET /api/comprobantes/generar-pdf/{reservaId}
+    generarPdfComprobante(reservaId) {
+        return axios.get(`${API_BASE_URL}/generar-pdf/${reservaId}`, {
             responseType: 'blob',
-            headers: {
-                'Accept': 'application/pdf',
-            }
+            headers: { 'Accept': 'application/pdf' }
         });
+    }
+
+    // POST /api/comprobantes/enviar-pdf-email/{reservaId}
+    enviarComprobantePdfPorEmail(reservaId) {
+        return axios.post(`${API_BASE_URL}/enviar-pdf-email/${reservaId}`);
     }
     
     getComprobantesByEmail(email) {
@@ -38,9 +39,8 @@ class ComprobanteService {
         return axios.get(`${API_BASE_URL}/email/${email}`);
     }
 
-    enviarEmailComprobante(codigoComprobante) {
-        return axios.post(`${API_BASE_URL}/${codigoComprobante}/enviar-email`);
-    }
+    // Deprecated: Use enviarComprobantePdfPorEmail(reservaId) instead
+    // enviarEmailComprobante(codigoComprobante) { ... }
 }
 
 export default new ComprobanteService();
