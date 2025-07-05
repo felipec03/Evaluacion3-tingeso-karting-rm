@@ -70,7 +70,7 @@ public class ComprobanteService {
     }
 
     @Transactional
-    public ComprobanteEntity generarComprobante(Long reservaId) {
+    public ComprobanteEntity generarComprobante(Long reservaId, String metodoPago) {
         Optional<ReservaEntity> reservaOpt = reservaRepository.findById(reservaId);
         if (reservaOpt.isEmpty()) {
             throw new RuntimeException("Reserva no encontrada con ID: " + reservaId);
@@ -100,10 +100,15 @@ public class ComprobanteService {
         }
 
         // Crear el comprobante
+
         ComprobanteEntity comprobante = new ComprobanteEntity();
         comprobante.setReservaId(reservaId);
         comprobante.setEmail(reserva.getEmailarrendatario());
         comprobante.setCodigo(codigo);
+        comprobante.setNombreUsuario(usuario.getNombre() + (usuario.getApellido() != null ? (" " + usuario.getApellido()) : ""));
+        comprobante.setMetodoPago(metodoPago != null ? metodoPago : "TARJETA");
+        comprobante.setEstadoPago("PAGADO");
+        comprobante.setFechaEmision(new java.util.Date());
 
         // Calcular precios y descuentos
         float tarifaBase = reserva.getPrecioInicial();
@@ -304,8 +309,8 @@ public class ComprobanteService {
         Optional<ComprobanteEntity> comprobanteOpt = comprobanteRepository.findByReservaId(reservaId);
 
         if (comprobanteOpt.isEmpty()) {
-            // Generate a new comprobante
-            comprobante = generarComprobante(reservaId);
+            // Generate a new comprobante (default to TARJETA if not specified)
+            comprobante = generarComprobante(reservaId, "TARJETA");
         } else {
             comprobante = comprobanteOpt.get();
         }

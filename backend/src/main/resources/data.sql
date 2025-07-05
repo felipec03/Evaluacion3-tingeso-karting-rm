@@ -48,10 +48,22 @@ INSERT INTO karts (model, codificacion, estado) VALUES
 ('Model C', 'K009', 'FUERA_DE_SERVICIO'),
 ('Model A', 'K010', 'PERFECTO'),
 ('Model B', 'K011', 'PERFECTO'),
-('Model C', 'K012', 'EN_MANTENIMIENTO'),
+('Model C', 'K012', 'PERFECTO'),
 ('Model X', 'K013', 'PERFECTO'),
-('Model Y', 'K014', 'FUERA_DE_SERVICIO'),
+('Model Y', 'K014', 'PERFECTO'),
 ('Model Z', 'K015', 'PERFECTO');
+
+-- Tarifas para días especiales
+INSERT INTO tarifas_dia_especial (fecha, porcentaje_aumento, descripcion) VALUES
+('2025-07-16', 15.0, 'Día de la virgen del carmen - 15% de aumento'),
+('2025-12-25', 25.0, 'Navidad - 25% de aumento'),
+('2026-01-01', 30.0, 'Año Nuevo - 30% de aumento');
+
+-- Descuentos por persona
+INSERT INTO descuentos_persona (min_personas, max_personas, porcentaje_descuento) VALUES
+(3, 5, 10.0),
+(6, 10, 20.0),
+(11, 15, 30.0);
 
 -- Update this insert statement to include all required fields:
 INSERT INTO comprobantes (email, tarifa_base, descuento_cumple, descuento_frecuente, descuento_grupo, iva, precio_sin_iva, total) VALUES

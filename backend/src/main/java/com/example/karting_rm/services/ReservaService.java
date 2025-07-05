@@ -1,6 +1,8 @@
 package com.example.karting_rm.services;
 
+import com.example.karting_rm.entities.DescuentosPersonaEntity;
 import com.example.karting_rm.entities.ReservaEntity;
+import com.example.karting_rm.entities.TarifasDiaEspecialEntity;
 import com.example.karting_rm.repositories.ReservaRepository;
 import jakarta.transaction.Transactional;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +22,12 @@ import java.util.Optional;
 public class ReservaService {
     @Autowired
     private ReservaRepository reservaRepository;
+
+    @Autowired
+    private TarifasDiaEspecialService tarifasDiaEspecialService;
+
+    @Autowired
+    private DescuentosPersonaService descuentosPersonaService;
 
 
     public boolean checkDisponibilidad(ReservaEntity reserva) {
@@ -50,27 +58,32 @@ public class ReservaService {
             default -> throw new IllegalArgumentException("Tipo de reserva inválido");
         };
 
-        // Check for holidays/weekends
-        LocalDateTime fechaInicio = reserva.getInicio_reserva();
-        String fechaMesDia = fechaInicio.format(DateTimeFormatter.ofPattern("MM-dd"));
-        List<String> feriados = List.of("01-01", "05-01", "09-18", "09-19", "12-25");
-        boolean esFeriado = feriados.contains(fechaMesDia);
-        boolean esFinDeSemana = fechaInicio.getDayOfWeek() == DayOfWeek.SATURDAY ||
-                fechaInicio.getDayOfWeek() == DayOfWeek.SUNDAY;
-
-        // Apply surcharges (25% for holidays, 15% for weekends)
-        if (esFeriado) precioInicial *= 1.25f;
-        if (esFinDeSemana) precioInicial *= 1.15f;
+        // Check for special day rates
+        LocalDate fechaReserva = reserva.getFecha();
+        TarifasDiaEspecialEntity tarifaEspecial = tarifasDiaEspecialService.getTarifaByFecha(fechaReserva);
+        if (tarifaEspecial != null) {
+            precioInicial *= (1 + tarifaEspecial.getPorcentajeAumento() / 100.0f);
+        } else {
+            // Check for weekends if no special rate applies
+            DayOfWeek dayOfWeek = fechaReserva.getDayOfWeek();
+            if (dayOfWeek == DayOfWeek.SATURDAY || dayOfWeek == DayOfWeek.SUNDAY) {
+                precioInicial *= 1.15f; // 15% surcharge for weekends
+            }
+        }
 
         return precioInicial;
     }
 
     public float calcularDescuentoGrupo(ReservaEntity reserva, float precioInicial) {
         int personas = reserva.getNumero_personas();
-        if (personas <= 2) return 0;
-        else if (personas <= 5) return precioInicial * 0.1f;
-        else if (personas <= 10) return precioInicial * 0.2f;
-        else if (personas <= 15) return precioInicial * 0.3f;
+        List<DescuentosPersonaEntity> descuentos = descuentosPersonaService.getAllDescuentos();
+
+        for (DescuentosPersonaEntity descuento : descuentos) {
+            if (personas >= descuento.getMinPersonas() && personas <= descuento.getMaxPersonas()) {
+                return precioInicial * (float) (descuento.getPorcentajeDescuento() / 100.0);
+            }
+        }
+
         return 0;
     }
 
@@ -105,8 +118,6 @@ public class ReservaService {
         reservaRepository.delete(reserva);
     }
 
-    // ...existing code...
-
     public boolean checkDisponibilidadExcluding(ReservaEntity reserva) {
         LocalDateTime inicio = reserva.getInicio_reserva();
         LocalDateTime fin = reserva.getFin_reserva();
@@ -130,8 +141,6 @@ public class ReservaService {
         }
         return true; // No overlap
     }
-
-    // ...existing code...
 
     @Transactional
     public ReservaEntity crearReserva(ReservaEntity reserva) {
@@ -232,8 +241,6 @@ public class ReservaService {
 
         return reservaRepository.save(reserva);
     }
-
-    // ...existing code...
 
     /**
      * Calculates all prices and updates the reservation entity with them

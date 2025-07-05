@@ -48,7 +48,7 @@ const ComprobanteForm = () => {
         setSuccess(false);
         setComprobanteDetails(null);
         
-        ComprobanteService.crearComprobante(reservaId, metodoPago)
+        ComprobanteService.generarComprobante(reservaId, metodoPago)
             .then(response => {
                 setComprobanteDetails(response.data);
                 setSuccess(true);
@@ -61,15 +61,15 @@ const ComprobanteForm = () => {
     };
     
     const downloadPdf = () => {
-        if (!comprobanteDetails || !comprobanteDetails.idComprobante) {
-            setError('No hay detalles del comprobante para descargar o falta el ID del comprobante.');
+        if (!comprobanteDetails || !comprobanteDetails.idReserva) {
+            setError('No hay detalles del comprobante para descargar o falta el ID de la reserva.');
             return;
         }
         
         setLoading(true);
         setError('');
         
-        ComprobanteService.downloadComprobantePdfById(comprobanteDetails.idComprobante)
+        ComprobanteService.downloadComprobantePdfByReservaId(comprobanteDetails.idReserva)
             .then(response => {
                 const contentType = response.headers['content-type'];
                 
@@ -79,7 +79,7 @@ const ComprobanteForm = () => {
                     link.href = url;
                     
                     const contentDisposition = response.headers['content-disposition'];
-                    let filename = `Comprobante-${comprobanteDetails.idComprobante}.pdf`;
+                    let filename = `Comprobante-Reserva-${comprobanteDetails.idReserva}.pdf`;
                     
                     if (contentDisposition) {
                         const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);

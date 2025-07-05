@@ -35,13 +35,34 @@ public class ComprobanteController {
     }
 
     @RequestMapping(value = "/generar/{reservaId}", method = {RequestMethod.GET, RequestMethod.POST})
-    public ResponseEntity<?> generarComprobante(@PathVariable Long reservaId) {
+    public ResponseEntity<?> generarComprobante(@PathVariable Long reservaId, @RequestParam(value = "metodoPago", required = false) String metodoPago) {
         try {
-            ComprobanteEntity comprobante = comprobanteService.generarComprobante(reservaId);
-            return ResponseEntity.ok(comprobante);
+            ComprobanteEntity comprobante = comprobanteService.generarComprobante(reservaId, metodoPago);
+            // Map to DTO for frontend compatibility
+            return ResponseEntity.ok(mapComprobanteToDto(comprobante));
         } catch (RuntimeException e) {
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    // Utilidad para mapear a DTO compatible con frontend
+    private Object mapComprobanteToDto(ComprobanteEntity c) {
+        return new java.util.HashMap<String, Object>() {{
+            put("idComprobante", c.getId());
+            put("codigoComprobante", c.getCodigo());
+            put("idReserva", c.getReservaId());
+            put("nombreUsuario", c.getNombreUsuario());
+            put("emailUsuario", c.getEmail());
+            put("fechaEmision", c.getFechaEmision());
+            put("montoBase", c.getTarifaBase());
+            put("montoDescuentoTotal", Math.max(Math.max(c.getDescuentoGrupo(), c.getDescuentoFrecuente()), c.getDescuentoCumple()));
+            put("porcentajeDescuentoAplicado", c.getTarifaBase() > 0 ? (100.0 * Math.max(Math.max(c.getDescuentoGrupo(), c.getDescuentoFrecuente()), c.getDescuentoCumple()) / c.getTarifaBase()) : 0);
+            put("subtotalSinIva", c.getPrecioSinIva());
+            put("iva", c.getIva());
+            put("montoPagadoTotal", c.getTotal());
+            put("metodoPago", c.getMetodoPago());
+            put("estadoPago", c.getEstadoPago());
+        }};
     }
 
     @GetMapping("/email/{email}")

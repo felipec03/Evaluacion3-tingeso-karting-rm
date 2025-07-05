@@ -45,8 +45,7 @@ const NuestraOferta = () => {
 
         DescuentoPersonaService.getAllDescuentosPersona()
             .then(response => {
-                const activeDescuentos = response.data.filter(descuento => descuento.activo !== false);
-                setDescuentosState({ data: activeDescuentos, loading: false, error: null });
+                setDescuentosState({ data: response.data, loading: false, error: null });
             })
             .catch(error => {
                 console.error("Error fetching descuentos persona:", error);
@@ -231,20 +230,18 @@ const NuestraOferta = () => {
         { key: "activa", render: (item) => <Badge bg={item.activa ? 'success' : 'danger'}>{item.activa ? 'Sí' : 'No'}</Badge> }
     ];
 
-    const descuentosColumns = ["ID", "Rango de Personas", "Porcentaje Descuento", "Activo"];
+    const descuentosColumns = ["ID", "Rango de Personas", "Porcentaje Descuento"];
     const descuentosDataKeyMap = [
         { key: "id" },
-        { key: "rangoPersonas", render: (item) => `${item.personasMin} - ${item.personasMax}` },
+        { key: "rangoPersonas", render: (item) => `${item.minPersonas} - ${item.maxPersonas}` },
         { key: "porcentajeDescuento", render: (item) => `${item.porcentajeDescuento}%` },
-        { key: "activo", render: (item) => <Badge bg={item.activo ? 'success' : 'danger'}>{item.activo ? 'Sí' : 'No'}</Badge> }
     ];
 
-    const especialesColumns = ["Descripción", "Fecha", "Recargo (%)", "Es Feriado"];
+    const especialesColumns = ["Descripción", "Fecha", "Aumento (%)"];
     const especialesDataKeyMap = [
         { key: "descripcion" },
-        { key: "fecha", render: (item) => item.fecha ? new Date(item.fecha + 'T00:00:00').toLocaleDateString('es-CL', { timeZone: 'UTC' }) : 'Fin de semana' },
-        { key: "recargoPorcentaje", render: (item) => `${item.recargoPorcentaje}%` },
-        { key: "esFeriado", render: (item) => <Badge bg={item.esFeriado ? 'info' : 'secondary'}>{item.esFeriado ? 'Sí' : 'No'}</Badge> }
+        { key: "fecha", render: (item) => item.fecha ? new Date(item.fecha + 'T00:00:00').toLocaleDateString('es-CL', { timeZone: 'UTC' }) : 'N/A' },
+        { key: "porcentajeAumento", render: (item) => `${item.porcentajeAumento}%` },
     ];
 
     return (
