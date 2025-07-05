@@ -1,0 +1,171 @@
+.reservas-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+h2 {
+  font-size: 24px;
+  color: #333;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.add-reserve-btn-container {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.add-reserve-btn {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  transition: background-color 0.3s;
+}
+
+.add-reserve-btn:hover {
+  background-color: #0056b3;
+}
+
+.reservas-table {
+  width: 100%;
+  border-collapse: collapse;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.reservas-table th {
+  background-color: #1e2431;
+  color: white;
+  text-align: left;
+  padding: 12px;
+}
+
+.reservas-table td {
+  padding: 12px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.reservas-table tr:nth-child(even) {
+  background-color: #f8f9fa;
+}
+
+.reservas-table tr:hover {
+  background-color: #e9ecef;
+}
+
+.btn-delete {
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.btn-delete:hover {
+  background-color: #bd2130;
+}
+
+.loading, .error, .no-data {
+  text-align: center;
+  padding: 20px;
+  font-size: 18px;
+  color: #555;
+}
+
+.error {
+  color: #dc3545;
+}
+
+/* Asegurar que la tabla sea responsiva */
+@media (max-width: 768px) {
+  .reservas-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}
+
+/* Add these styles to ReserveList.css */
+.table-responsive {
+  overflow-x: auto;
+}
+
+.bg-success {
+  background-color: #28a745 !important;
+}
+
+.bg-secondary {
+  background-color: #6c757d !important;
+}
+
+.bg-light {
+  background-color: #f8f9fa !important;
+}
+
+.text-white {
+  color: white !important;
+}
+
+td {
+  min-width: 120px;
+  max-width: 200px;
+  word-break: break-word;
+}
+
+/* Add to ReserveList.css */
+.calendar-header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+.calendar-header button {
+  background: none;
+  border: 1px solid #ddd;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.reservas-table {
+  table-layout: fixed;
+  border-collapse: collapse;
+}
+
+.reservas-table th, 
+.reservas-table td {
+  padding: 0.5rem;
+  border: 1px solid #dee2e6;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.reserva-info {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.reserva-info:hover {
+  background-color: rgba(0,0,0,0.1);
+}
+
+.current-day {
+  background-color: #e3f2fd !important;
+}
+
+.bg-success {
+  background-color: #28a745 !important;
+}
+
+.bg-secondary {
+  background-color: #6c757d !important;
+}

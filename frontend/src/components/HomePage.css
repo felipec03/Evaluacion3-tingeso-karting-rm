@@ -1,0 +1,53 @@
+/* ... existing App.css styles ... */
+
+/* HomePage Specific Styles */
+.hero-section {
+  /* Styles are mostly inline in JSX for background image handling */
+  /* You can add more text styling or overlay refinements here if needed */
+}
+
+.hero-section h1 {
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5); /* Subtle text shadow for readability */
+}
+
+.hero-section .btn {
+  font-weight: 600;
+  padding: 0.75rem 1.5rem; /* Slightly larger buttons */
+}
+
+.card.hover-lift-img {
+    transition: transform 0.3s ease-out, box-shadow 0.3s ease-out;
+    border-radius: 1rem !important; /* Softer, larger border radius (Bootstrap's rounded-4) */
+}
+
+.card.hover-lift-img:hover {
+    transform: translateY(-8px); /* Slightly more lift */
+    box-shadow: 0 0.75rem 1.5rem rgba(0, 0, 0, 0.1) !important; /* Softer, more spread shadow */
+}
+
+.card.hover-lift-img .card-img-top {
+    transition: transform 0.3s ease-out;
+}
+
+.card.hover-lift-img:hover .card-img-top {
+    transform: scale(1.03); /* Slight zoom effect on image */
+}
+
+.card .card-title {
+    color: #343a40; /* Darker color for titles */
+}
+
+.card .card-text.small {
+    font-size: 0.9rem; /* Slightly smaller card text for balance */
+    line-height: 1.5;
+}
+
+.card .btn {
+    font-weight: 500;
+}
+
+/* Ensure Bootstrap icons are vertically aligned with text in buttons */
+.btn .bi {
+    vertical-align: text-bottom; /* Or adjust as needed */
+    margin-bottom: 0.05em; /* Fine-tune alignment */
+}

@@ -1,0 +1,105 @@
+/* Base body styles */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f8f9fa; /* A light gray background (Bootstrap's light color) */
+  color: #212529; /* Default text color (Bootstrap's dark color) */
+  line-height: 1.6;
+}
+
+/* Force vertical scrollbar to always be visible to prevent width jumps */
+html {
+  overflow-y: scroll;
+}
+
+/* Ensure #root and .App take up full height and allow for flexbox layout */
+#root {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.App {
+  flex: 1; /* Allows .App to grow and fill available space */
+  display: flex;
+  flex-direction: column;
+}
+
+/* The <main className="container mt-4"> in App.jsx will handle main content padding.
+   Individual components will then structure their content within this container.
+   If you want a consistent "card" look for content on pages, you can define a
+   utility class here, e.g., .content-card, and apply it in your components.
+*/
+
+/* Example: A general style for content sections if you want a card-like appearance
+.content-card {
+  background-color: #ffffff;
+  padding: 1.5rem;
+  border-radius: 0.375rem; // Bootstrap's default border-radius
+  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075); // Bootstrap's default shadow
+  margin-bottom: 1.5rem;
+}
+*/
+
+/* Remove or comment out the original Vite/React boilerplate styles if they are not being used */
+/*
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card { // This is a generic .card style. Bootstrap also has .card.
+  padding: 2em; // Be cautious with generic selectors like this if using a CSS framework.
+}
+
+.read-the-docs {
+  color: #888;
+}
+*/
+
+/* Optional: Custom scrollbar for a slightly cleaner look */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #e9ecef; /* Lighter track color */
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #adb5bd; /* Softer thumb color */
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #6c757d; /* Darker thumb on hover */
+}
