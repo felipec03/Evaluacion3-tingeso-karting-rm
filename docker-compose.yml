@@ -12,6 +12,7 @@ services:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     networks:
       - karting-network
     healthcheck:
@@ -19,6 +20,33 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+  # SonarQube
+  sonarqube:
+    image: sonarqube:community
+    container_name: sonarqube-karting
+    restart: always
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+      - SONAR_JDBC_URL=jdbc:postgresql://postgres:5432/sonarqube
+      - SONAR_JDBC_USERNAME=postgres
+      - SONAR_JDBC_PASSWORD=postgres
+    ports:
+      - "9000:9000"
+    volumes:
+      - sonarqube-data:/opt/sonarqube/data
+      - sonarqube-logs:/opt/sonarqube/logs
+      - sonarqube-extensions:/opt/sonarqube/extensions
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - karting-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/api/system/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
 
   # Backend Services (3 instances)
   backend-1:
@@ -102,6 +130,23 @@ services:
       - backend-3
     networks:
       - karting-network
+
+  sonar-scanner-backend:
+    image: sonarsource/sonar-scanner-cli:latest
+    container_name: sonar-scanner-backend
+    environment:
+      - SONAR_HOST_URL=http://sonarqube:9000
+      - SONAR_SCANNER_OPTS=-Xmx512m
+    volumes:
+      - ./backend:/usr/src
+    working_dir: /usr/src
+    depends_on:
+      sonarqube:
+        condition: service_healthy
+    networks:
+      - karting-network
+    profiles:
+      - analysis
 
 networks:
   karting-network:
