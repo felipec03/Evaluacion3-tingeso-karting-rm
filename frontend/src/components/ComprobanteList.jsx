@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import ComprobanteService from '../services/ComprobanteService';
-import { Table, Alert, Spinner, Button } from 'react-bootstrap';
+import { Table, Alert, Spinner, Button, Modal, Toast, ToastContainer } from 'react-bootstrap';
 
 const ComprobanteList = () => {
     const [comprobantes, setComprobantes] = useState([]);
@@ -9,10 +9,22 @@ const ComprobanteList = () => {
     const [loadingPdfId, setLoadingPdfId] = useState(null);
     const [loadingEmailCodigo, setLoadingEmailCodigo] = useState(null);
 
+    // State for confirmation modal
+    const [showConfirmModal, setShowConfirmModal] = useState(false);
+    const [modalConfig, setModalConfig] = useState({ title: '', body: '', onConfirm: () => {} });
+
+    // State for toast notifications
+    const [showToast, setShowToast] = useState(false);
+    const [toastConfig, setToastConfig] = useState({ message: '', variant: 'success' });
 
     useEffect(() => {
         fetchComprobantes();
     }, []);
+
+    const showToastNotification = (message, variant = 'success') => {
+        setToastConfig({ message, variant });
+        setShowToast(true);
+    };
 
     const fetchComprobantes = () => {
         setLoading(true);
@@ -28,46 +40,67 @@ const ComprobanteList = () => {
             });
     };
 
-    // Descargar PDF usando el endpoint desacoplado
-    const handleDownloadPdf = (idComprobante) => {
-        setLoadingPdfId(idComprobante);
-        ComprobanteService.generarPdfComprobante(idComprobante)
+    // --- PDF Download Logic ---
+    const handleDownloadPdf = (reservaId) => {
+        setModalConfig({
+            title: 'Confirmar Descarga de PDF',
+            body: `¿Está seguro de que desea descargar el PDF para la reserva ${reservaId}?`,
+            onConfirm: () => executeDownloadPdf(reservaId)
+        });
+        setShowConfirmModal(true);
+    };
+
+    const executeDownloadPdf = (reservaId) => {
+        setLoadingPdfId(reservaId);
+        ComprobanteService.generarPdfComprobante(reservaId)
             .then(response => {
                 const url = window.URL.createObjectURL(new Blob([response.data]));
                 const link = document.createElement('a');
-                let filename = `Comprobante-${idComprobante}.pdf`;
-                const contentDisposition = response.headers['content-disposition'];
-                if (contentDisposition) {
-                    const match = contentDisposition.match(/filename="?([^";]+)"?/);
-                    if (match) filename = match[1];
-                }
                 link.href = url;
-                link.setAttribute('download', filename);
+                link.setAttribute('download', `Comprobante-Reserva-${reservaId}.pdf`);
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
+                showToastNotification(`La descarga del PDF para la reserva ${reservaId} ha comenzado.`);
             })
             .catch(err => {
-                setError(`Error al descargar PDF para ${idComprobante}: ` + (err.response?.data || err.message));
+                const errorMessage = `Error al descargar PDF: ` + (err.response?.data || err.message);
+                showToastNotification(errorMessage, 'danger');
             })
             .finally(() => {
                 setLoadingPdfId(null);
             });
     };
 
-    // Enviar comprobante PDF por email usando el endpoint desacoplado
-    const handleEnviarEmail = (idComprobante) => {
-        setLoadingEmailCodigo(idComprobante);
-        ComprobanteService.enviarComprobantePdfPorEmail(idComprobante)
+    // --- Email Sending Logic ---
+    const handleEnviarEmail = (reservaId) => {
+        setModalConfig({
+            title: 'Confirmar Envío de Email',
+            body: `¿Está seguro de que desea enviar el comprobante por email para la reserva ${reservaId}?`,
+            onConfirm: () => executeEnviarEmail(reservaId)
+        });
+        setShowConfirmModal(true);
+    };
+
+    const executeEnviarEmail = (reservaId) => {
+        setLoadingEmailCodigo(reservaId);
+        ComprobanteService.enviarComprobantePdfPorEmail(reservaId)
             .then(() => {
-                alert(`Comprobante enviado por email correctamente para ${idComprobante}`);
+                showToastNotification(`Comprobante para reserva ${reservaId} enviado por email correctamente.`);
             })
             .catch(err => {
-                setError(`Error al enviar email para ${idComprobante}: ` + (err.response?.data || err.message));
+                const errorMessage = `Error al enviar email: ` + (err.response?.data || err.message);
+                showToastNotification(errorMessage, 'danger');
             })
             .finally(() => {
                 setLoadingEmailCodigo(null);
             });
+    };
+
+    const handleCloseModal = () => setShowConfirmModal(false);
+    const handleConfirmModal = () => {
+        modalConfig.onConfirm();
+        handleCloseModal();
     };
 
 
@@ -91,67 +124,82 @@ const ComprobanteList = () => {
     }
 
     return (
-        <div className="card shadow-sm">
-            <div className="card-header bg-light py-3">
-                <h4 className="mb-0">Listado de Comprobantes Emitidos</h4>
+        <>
+            <div className="card shadow-sm">
+                <div className="card-header bg-light py-3">
+                    <h4 className="mb-0">Listado de Comprobantes Emitidos</h4>
+                </div>
+                <div className="card-body">
+                    <Table striped bordered hover responsive className="align-middle">
+                        {/* ... Table Head ... */}
+                        <tbody>
+                            {comprobantes.map(c => (
+                                <tr key={c.id}>
+                                    <td>{c.id}</td>
+                                    <td>{c.codigo}</td>
+                                    <td>{c.reservaId}</td>
+                                    <td>{c.nombreUsuario}</td>
+                                    <td>{c.email}</td>
+                                    <td>{new Date(c.fechaEmision).toLocaleString()}</td>
+                                    <td className="text-end">{Number(c.total).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' })}</td>
+                                    <td>{c.metodoPago}</td>
+                                    <td>
+                                        <span className={`badge bg-${c.estadoPago === 'PAGADO' ? 'success' : 'warning'}`}>
+                                            {c.estadoPago}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <Button 
+                                            variant="outline-primary" 
+                                            size="sm" 
+                                            className="me-2 mb-1 mb-md-0"
+                                            onClick={() => handleDownloadPdf(c.reservaId)}
+                                            disabled={loadingPdfId === c.reservaId}
+                                        >
+                                            {loadingPdfId === c.reservaId ? <Spinner as="span" animation="border" size="sm" /> : 'PDF'}
+                                        </Button>
+                                        <Button 
+                                            variant="outline-info" 
+                                            size="sm"
+                                            onClick={() => handleEnviarEmail(c.reservaId)}
+                                            disabled={loadingEmailCodigo === c.reservaId}
+                                        >
+                                            {loadingEmailCodigo === c.reservaId ? <Spinner as="span" animation="border" size="sm" /> : 'Email'}
+                                        </Button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </Table>
+                </div>
             </div>
-            <div className="card-body">
-                <Table striped bordered hover responsive className="align-middle">
-                    <thead className="table-dark">
-                        <tr>
-                            <th>ID</th>
-                            <th>Código</th>
-                            <th>ID Reserva</th>
-                            <th>Cliente</th>
-                            <th>Email</th>
-                            <th>Fecha Emisión</th>
-                            <th>Total Pagado</th>
-                            <th>Método Pago</th>
-                            <th>Estado</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {comprobantes.map(c => (
-                            <tr key={c.idComprobante}>
-                                <td>{c.idComprobante}</td>
-                                <td>{c.codigoComprobante}</td>
-                                <td>{c.idReserva}</td>
-                                <td>{c.nombreUsuario}</td>
-                                <td>{c.emailUsuario}</td>
-                                <td>{new Date(c.fechaEmision).toLocaleString()}</td>
-                                <td className="text-end">{Number(c.montoPagadoTotal).toLocaleString('es-CL', { style: 'currency', currency: 'CLP' })}</td>
-                                <td>{c.metodoPago}</td>
-                                <td>
-                                    <span className={`badge bg-${c.estadoPago === 'PAGADO' ? 'success' : 'warning'}`}>
-                                        {c.estadoPago}
-                                    </span>
-                                </td>
-                                <td>
-                                    <Button 
-                                        variant="outline-primary" 
-                                        size="sm" 
-                                        className="me-2 mb-1 mb-md-0"
-                                        onClick={() => handleDownloadPdf(c.idComprobante)}
-                                        disabled={loadingPdfId === c.idComprobante}
-                                    >
-                                        {loadingPdfId === c.idComprobante ? <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" /> : 'PDF'}
-                                    </Button>
-                                    <Button 
-                                        variant="outline-info" 
-                                        size="sm"
-                                        onClick={() => handleEnviarEmail(c.codigoComprobante)}
-                                        disabled={loadingEmailCodigo === c.codigoComprobante}
-                                    >
-                                        {loadingEmailCodigo === c.codigoComprobante ? <Spinner as="span" animation="border" size="sm" role="status" aria-hidden="true" /> : 'Email'}
-                                    </Button>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </Table>
-            </div>
-        </div>
+
+            {/* Confirmation Modal */}
+            <Modal show={showConfirmModal} onHide={handleCloseModal} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>{modalConfig.title}</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>{modalConfig.body}</Modal.Body>
+                <Modal.Footer>
+                    <Button variant="secondary" onClick={handleCloseModal}>
+                        Cancelar
+                    </Button>
+                    <Button variant="primary" onClick={handleConfirmModal}>
+                        Confirmar
+                    </Button>
+                </Modal.Footer>
+            </Modal>
+
+            {/* Toast Notifications */}
+            <ToastContainer position="top-end" className="p-3" style={{ zIndex: 1055 }}>
+                <Toast onClose={() => setShowToast(false)} show={showToast} delay={5000} autohide bg={toastConfig.variant}>
+                    <Toast.Header>
+                        <strong className="me-auto">Notificación</strong>
+                    </Toast.Header>
+                    <Toast.Body className={toastConfig.variant === 'danger' ? 'text-white' : ''}>{toastConfig.message}</Toast.Body>
+                </Toast>
+            </ToastContainer>
+        </>
     );
 };
 

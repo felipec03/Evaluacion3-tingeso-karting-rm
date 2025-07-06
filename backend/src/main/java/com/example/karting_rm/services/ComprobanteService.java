@@ -1,7 +1,3 @@
-    public ComprobanteEntity getComprobanteByReservaId(Long reservaId) {
-        return comprobanteRepository.findByReservaId(reservaId)
-            .orElseThrow(() -> new RuntimeException("Comprobante no encontrado"));
-    }
 package com.example.karting_rm.services;
 
 import com.example.karting_rm.entities.ComprobanteEntity;
@@ -72,6 +68,12 @@ public class ComprobanteService {
         return comprobanteRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Comprobante no encontrado"));
     }
+
+    public ComprobanteEntity getComprobanteByReservaId(Long reservaId) {
+        return comprobanteRepository.findByReservaId(reservaId)
+                .orElseThrow(() -> new RuntimeException("Comprobante no encontrado para la reserva con ID: " + reservaId));
+    }
+
 
     @Transactional
     public ComprobanteEntity generarComprobanteOnly(Long reservaId, String metodoPago) {
@@ -332,12 +334,8 @@ public class ComprobanteService {
         ComprobanteEntity comprobante;
         Optional<ComprobanteEntity> comprobanteOpt = comprobanteRepository.findByReservaId(reservaId);
 
-        if (comprobanteOpt.isEmpty()) {
-            // Generate a new comprobante (default to TARJETA if not specified)
-            comprobante = generarComprobanteOnly(reservaId, "TARJETA");
-        } else {
-            comprobante = comprobanteOpt.get();
-        }
+        // Generate a new comprobante (default to TARJETA if not specified)
+        comprobante = comprobanteOpt.orElseGet(() -> generarComprobanteOnly(reservaId, "TARJETA"));
 
         UsuarioEntity usuario = usuarioRepository.findByEmail(reserva.getEmailarrendatario());
         if (usuario == null) {

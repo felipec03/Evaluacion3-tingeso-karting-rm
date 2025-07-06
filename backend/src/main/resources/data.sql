@@ -65,10 +65,9 @@ INSERT INTO descuentos_persona (min_personas, max_personas, porcentaje_descuento
 (6, 10, 20.0),
 (11, 15, 30.0);
 
--- Update this insert statement to include all required fields:
-INSERT INTO comprobantes (email, tarifa_base, descuento_cumple, descuento_frecuente, descuento_grupo, iva, precio_sin_iva, total) VALUES
-  ('juan.perez@example.com', 100, 0.0, 0.0, 0.0, 19.0, 100.0, 119.0),
-  ('maria.gomez@example.com', 100, 0.0, 0.0, 0.0, 19.0, 100.0, 119.0),
-  ('carlos.ruiz@example.com', 150, 0.0, 0.0, 0.0, 28.5, 150.0, 178.5),
-  ('ana.sanchez@example.com', 200, 0.0, 0.0, 0.0, 38.0, 200.0, 238.0),
-  ('luis.fernandez@example.com', 100, 0.0, 0.0, 0.0, 19.0, 100.0, 119.0);
+INSERT INTO comprobantes (reserva_id, codigo, email, nombre_usuario, tarifa_base, descuento_grupo, descuento_frecuente, descuento_cumple, precio_sin_iva, iva, total, metodo_pago, estado_pago, fecha_emision) VALUES
+(1, 'KRM-ABC12345', 'juan.perez@example.com', 'Juan Pérez', 100.0, 0.0, 0.0, 0.0, 100.0, 19.0, 119.0, 'TARJETA', 'PAGADO', '2025-05-01 12:00:00'),
+(2, 'KRM-DEF67890', 'maria.gomez@example.com', 'María Gómez', 100.0, 0.0, 0.0, 0.0, 100.0, 19.0, 119.0, 'TARJETA', 'PAGADO', '2025-05-02 16:00:00'),
+(3, 'KRM-GHI11223', 'carlos.ruiz@example.com', 'Carlos Ruiz', 150.0, 15.0, 0.0, 0.0, 135.0, 25.65, 160.65, 'EFECTIVO', 'PAGADO', '2025-05-03 17:00:00'),
+(4, 'KRM-JKL44556', 'ana.sanchez@example.com', 'Ana Sánchez', 200.0, 20.0, 0.0, 0.0, 180.0, 34.2, 214.2, 'TARJETA', 'PAGADO', '2025-05-04 16:30:00'),
+(5, 'KRM-MNO77889', 'luis.fernandez@example.com', 'Luis Fernández', 100.0, 0.0, 10.0, 0.0, 90.0, 17.1, 107.1, 'TARJETA', 'PAGADO', '2025-05-05 17:00:00');

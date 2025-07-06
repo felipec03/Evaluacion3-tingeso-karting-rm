@@ -106,12 +106,12 @@ const ReportView = () => {
     };
 
     const getChartData = () => {
-        // ... (existing code for chart data)
         if (!reportData || !reportData.filasReporte || reportData.filasReporte.length === 0) {
             return { labels: [], datasets: [] };
         }
 
-        const labels = reportData.mesesColumnas || []; 
+        // Use mesesDelRango from the API response
+        const labels = reportData.mesesDelRango || []; 
 
         const datasets = reportData.filasReporte.map((fila, index) => {
             const colors = [
@@ -130,7 +130,13 @@ const ReportView = () => {
         });
 
         return {
-            labels: labels,
+            labels: labels.map(mes => {
+                // Convert "2025-06" to "Jun 2025" for better display
+                const [year, month] = mes.split('-');
+                const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 
+                                   'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                return `${monthNames[parseInt(month) - 1]} ${year}`;
+            }),
             datasets: datasets,
         };
     };
@@ -196,12 +202,16 @@ const ReportView = () => {
     };
     
     const renderReportTable = () => {
-        // ... (existing code for rendering report table)
         if (!reportData || !reportData.filasReporte || reportData.filasReporte.length === 0) {
             return <p className="text-muted text-center mt-3">No hay datos para mostrar para el rango seleccionado.</p>;
         }
 
-        const { mesesColumnas, filasReporte, totalesPorMes, granTotal } = reportData;
+        // Use mesesDelRango instead of mesesColumnas
+        const { mesesDelRango, filasReporte, totalesPorMes, granTotal } = reportData;
+
+        if (!mesesDelRango || mesesDelRango.length === 0) {
+            return <p className="text-muted text-center mt-3">No hay meses disponibles para mostrar.</p>;
+        }
 
         return (
             <div className="table-responsive mt-4">
@@ -210,7 +220,14 @@ const ReportView = () => {
                     <thead className="table-dark">
                         <tr>
                             <th scope="col">Categoría</th>
-                            {mesesColumnas.map(month => <th scope="col" key={month} className="text-end">{month}</th>)}
+                            {mesesDelRango.map(mes => {
+                                // Convert "2025-06" to "Jun 2025" for better display
+                                const [year, month] = mes.split('-');
+                                const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 
+                                                   'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+                                const displayMonth = `${monthNames[parseInt(month) - 1]} ${year}`;
+                                return <th scope="col" key={mes} className="text-end">{displayMonth}</th>
+                            })}
                             <th scope="col" className="text-end table-info">Total Categoría</th>
                         </tr>
                     </thead>
@@ -218,9 +235,9 @@ const ReportView = () => {
                         {filasReporte.map((fila, index) => (
                             <tr key={index}>
                                 <td className="fw-medium">{fila.categoria}</td>
-                                {mesesColumnas.map(month => (
-                                    <td key={`${fila.categoria}-${month}`} className="text-end">
-                                        {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(fila.ingresosPorMes[month] || 0)}
+                                {mesesDelRango.map(mes => (
+                                    <td key={`${fila.categoria}-${mes}`} className="text-end">
+                                        {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(fila.ingresosPorMes[mes] || 0)}
                                     </td>
                                 ))}
                                 <td className="text-end fw-bold table-info">
@@ -232,9 +249,9 @@ const ReportView = () => {
                     <tfoot className="table-group-divider">
                         <tr className="table-light fw-bold">
                             <td>Total Mensual</td>
-                            {mesesColumnas.map(month => (
-                                <td key={`total-${month}`} className="text-end">
-                                    {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalesPorMes[month] || 0)}
+                            {mesesDelRango.map(mes => (
+                                <td key={`total-${mes}`} className="text-end">
+                                    {new Intl.NumberFormat('es-CL', { style: 'currency', currency: 'CLP' }).format(totalesPorMes[mes] || 0)}
                                 </td>
                             ))}
                             <td className="text-end table-success fw-bolder">
