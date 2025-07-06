@@ -154,3 +154,6 @@ networks:
 
 volumes:
   postgres-data:
+  sonarqube-data:
+  sonarqube-logs:
+  sonarqube-extensions:
